@@ -45,7 +45,7 @@ router.post("/register", async (request, response) => {
         await user.save();
 
         // Return the user in the response
-        response.send({ user: user._id });
+        response.send({ id: user._id });
     } catch (error) {
         // Return DB error
         response.status(400).send(error);
@@ -70,7 +70,10 @@ router.post("/login", async (request, response) => {
 
     // Create and assign token
     const token = webToken.sign({ _id: user._id }, process.env.TOKEN_SECRET);
-    response.header("token", token).send(token);
+    response.header("token", token).send({
+        token,
+        name: user.name,
+    });
 });
 
 module.exports = router;
