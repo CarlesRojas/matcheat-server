@@ -1,10 +1,13 @@
-// Express Server
-const express = require("express");
-const app = express();
-
 // Dot env constants
 const dotenv = require("dotenv");
 dotenv.config();
+
+// Server port
+const port = process.env.PORT || 3100;
+
+// Express Server
+const express = require("express");
+const app = express();
 
 // Import routes
 const authRoutes = require("./routes/auth");
@@ -22,4 +25,4 @@ app.use("/api_v1/user", authRoutes);
 app.use("/api_v1/", restApiRoutes);
 
 // Start the server
-app.listen(3100, () => console.log("Server up and running."));
+app.listen(port, () => console.log(`Server up and running on port ${port}.`));
