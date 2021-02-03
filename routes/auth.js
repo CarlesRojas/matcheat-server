@@ -19,15 +19,15 @@ router.post("/register", async (request, response) => {
     const { error } = registerValidation(request.body);
 
     // If there is a validation error
-    if (error) return response.status(400).send(error.details[0].message);
+    if (error) return response.status(400).send({ error: error.details[0].message });
 
     // Check if the email has already been used
     const emailExists = await User.findOne({ email: request.body.email });
-    if (emailExists) return response.status(400).send("This email is already registered in MatchEat.");
+    if (emailExists) return response.status(400).send({ error: "This email is already registered in MatchEat." });
 
     // Check if the name has already been used
     const userExists = await User.findOne({ name: request.body.name });
-    if (userExists) return response.status(400).send("Username not available.");
+    if (userExists) return response.status(400).send({ error: "Username not available." });
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
@@ -48,7 +48,7 @@ router.post("/register", async (request, response) => {
         response.send({ id: user._id });
     } catch (error) {
         // Return DB error
-        response.status(400).send(error);
+        response.status(400).send({ error: error });
     }
 });
 
@@ -58,15 +58,15 @@ router.post("/login", async (request, response) => {
     const { error } = loginValidation(request.body);
 
     // If there is a validation error
-    if (error) return response.status(400).send(error.details[0].message);
+    if (error) return response.status(400).send({ error: error.details[0].message });
 
     // Check if the email exists
     const user = await User.findOne({ email: request.body.email });
-    if (!user) return response.status(400).send("This email does not exist.");
+    if (!user) return response.status(400).send({ error: "This email does not exist." });
 
     // Check if the password is correct
     const validPassword = await bcrypt.compare(request.body.password, user.password);
-    if (!validPassword) return response.status(400).send("Invalid password.");
+    if (!validPassword) return response.status(400).send({ error: "Invalid password." });
 
     // Create and assign token
     const token = webToken.sign({ _id: user._id }, process.env.TOKEN_SECRET);
