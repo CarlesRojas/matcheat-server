@@ -2,6 +2,9 @@
 const dotenv = require("dotenv");
 dotenv.config();
 
+// No Cors
+import cors from "cors";
+
 // Server port
 const port = process.env.PORT || 3100;
 
@@ -16,6 +19,9 @@ const restApiRoutes = require("./routes/restApi");
 // Connect to Mongoose DB
 const mongoose = require("mongoose");
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true }, () => console.log("Connected to DB."));
+
+// No Cors Middleware
+app.use(cors());
 
 // Middleware
 app.use(express.json());
