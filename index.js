@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 // No Cors
-import cors from "cors";
+const cors = require("cors");
 
 // Server port
 const port = process.env.PORT || 3100;
