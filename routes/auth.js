@@ -73,6 +73,7 @@ router.post("/login", async (request, response) => {
     response.header("token", token).send({
         token,
         name: user.name,
+        id: user._id,
     });
 });
 
