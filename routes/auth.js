@@ -33,9 +33,6 @@ router.post("/register", async (request, response) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(request.body.password, salt);
 
-    // Check that there is an image
-    if (!request.body.image) return response.status(400).send({ error: "Profile picture is missing." });
-
     // Create User
     const user = new User({
         name: request.body.name,
