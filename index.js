@@ -13,8 +13,9 @@ const express = require("express");
 const app = express();
 
 // Import routes
-const authRoutes = require("./routes/auth");
 const restApiRoutes = require("./routes/restApi");
+const authRoutes = require("./routes/auth");
+const awsApiRoutes = require("./routes/aws");
 
 // Connect to Mongoose DB
 const mongoose = require("mongoose");
@@ -23,10 +24,14 @@ mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology
 // No Cors Middleware
 app.use(cors());
 
-// Middleware
-app.use(express.json());
+// Middleware to parse the body of requests
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+//app.use(express.json());
 
 // Routes middlewares
+app.use("/api_v1/aws", awsApiRoutes);
 app.use("/api_v1/user", authRoutes);
 app.use("/api_v1/", restApiRoutes);
 

@@ -22,5 +22,16 @@ const loginValidation = (data) => {
     return loginSchema.validate(data);
 };
 
+// Upload to S3 validation
+const getS3URLValidation = (data) => {
+    const getS3URLSchema = Joi.object({
+        fileName: Joi.string().min(6).max(1024).required(),
+        fileType: Joi.string().min(6).max(1024).required(),
+    });
+
+    return getS3URLSchema.validate(data);
+};
+
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
+module.exports.getS3URLValidation = getS3URLValidation;

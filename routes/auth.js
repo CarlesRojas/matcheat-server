@@ -49,7 +49,7 @@ router.post("/register", async (request, response) => {
         response.send({ id: user._id });
     } catch (error) {
         // Return DB error
-        response.status(400).send({ error: error });
+        response.status(400).send({ error });
     }
 });
 
