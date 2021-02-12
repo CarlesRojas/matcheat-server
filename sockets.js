@@ -9,6 +9,23 @@ const socketio = require("socket.io");
 const Room = require("./models/Room");
 const User = require("./models/User");
 
+/*
+SOCKET MESSAGE TYPES:
+
+    // Emits to the client who made the connection
+    socket.emit("eventName", payload);
+
+    // Emit to all client connected except the client that made the connection
+    socket.broadcast.emit("eventName", payload);
+
+    // Emit to all clients connected
+    io.emit("eventName", payload);
+*/
+
+// #################################################
+//   FUNCTIONS
+// #################################################
+
 // Create Room
 async function createRoom(roomID, socketID, username) {
     // Return if room already exists
@@ -73,25 +90,16 @@ async function getUser(socketID) {
 // Get all users in a Room
 async function getAllUsersRoom() {}
 
+// #################################################
+//   MAIN SOCKET FUNCTION
+// #################################################
+
 async function startSockets(server) {
     // Sockets
     const io = socketio(server, { cors: { origin: "*" } });
 
     // Run when client connects
     io.on("connection", async (socket) => {
-        /*
-        SOCKET MESSAGE TYPES:
-
-            // Emits to the client who made the connection
-            socket.emit("eventName", payload);
-
-            // Emit to all client connected except the client that made the connection
-            socket.broadcast.emit("eventName", payload);
-
-            // Emit to all clients connected
-            io.emit("eventName", payload);
-        */
-
         // Welcome message for client
         socket.emit("welcome", "Welcome to sockets");
 
@@ -131,9 +139,20 @@ async function startSockets(server) {
         // Broadcast -> User disconnected
         socket.on("disconnect", async () => {
             const user = await getUser(socket.id);
-            console.log(user);
-            // CARLES Continue here -> Delete user from the room users list and check if hhe was the last user in the room to delete it too
-            io.emit("userDisconnected", `A user has disconnected`);
+
+            // Remove user from the users array in the room
+            await Room.updateOne({ id: "matcheat_room" }, { $pull: { users: { socketID: user.socketID } } });
+
+            // Get all users in the Room
+            const userInRoom = await Room.findOne({ id: "matcheat_room" }, { users: { $elemMatch: { roomID: user.roomID } } });
+
+            // If there are no more users in the Room -> Delete the Room
+            if (!("users" in userInRoom) || !userInRoom.users.length) {
+                await Room.updateOne({ id: "matcheat_room" }, { $pull: { rooms: { roomID: user.roomID } } });
+            }
+
+            // Inform everyone in the room that this user has disconected
+            io.to(user.roomID).emit("userDisconnected", { roomID: user.roomID, username: user.username });
         });
     });
 }
