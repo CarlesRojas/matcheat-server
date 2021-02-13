@@ -40,11 +40,11 @@ async function createRoom(roomID, socketID, username) {
     try {
         // Return if room already exists
         const room = await Room.findOne({ roomID });
-        if (room) return { error: "Room already exists" };
+        if (room) return { error: "Room already exists", errorCode: 611 };
 
         // Get user
         const user = await User.findOne({ username });
-        if (!user) return { error: "User does not exist" };
+        if (!user) return { error: "User does not exist", errorCode: 620 };
 
         // Kick from previous rooms and connections
         const kickedFromRoomError = await kickFromRoom(user);
@@ -67,7 +67,7 @@ async function createRoom(roomID, socketID, username) {
         // Return
         return { info: "Room created", simplifiedUser, room: newRoom };
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
@@ -76,12 +76,12 @@ async function joinRoom(roomID, socketID, username) {
     try {
         // Return if room does not exist or if it is closed
         const room = await Room.findOne({ roomID });
-        if (!room) return { error: "Room does not exist" };
+        if (!room) return { error: "Room does not exist", errorCode: 610 };
         if (!room.open) return { error: "Room is closed" };
 
         // Get user
         const user = await User.findOne({ username });
-        if (!user) return { error: "User does not exist" };
+        if (!user) return { error: "User does not exist", errorCode: 620 };
 
         // Kick from previous rooms and connections
         const kickedFromRoomError = await kickFromRoom(user);
@@ -98,7 +98,7 @@ async function joinRoom(roomID, socketID, username) {
         // Return
         return { info: "Room joined", simplifiedUser, room };
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
@@ -107,7 +107,7 @@ async function leaveRoom(socketID) {
     try {
         // Get user
         const user = await User.findOne({ socketID });
-        if (!user) return { error: "User does not exist" };
+        if (!user) return { error: "User does not exist", errorCode: 620 };
 
         // Get users room
         const room = { roomID: user.roomID };
@@ -127,7 +127,7 @@ async function leaveRoom(socketID) {
         // Return the user that left
         return { info: `${user.username} left the room`, simplifiedUser, room };
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
@@ -142,7 +142,7 @@ async function getAllUsersInARoom(roomID) {
             return { username, image };
         });
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
@@ -151,19 +151,19 @@ async function kickFromRoom(user) {
     try {
         if (user.socketID || user.roomID) {
             // Inform the user with that socket ID
-            if (user.socketID) io.to(user.socketID).emit("kicked", { info: "Kicked from Room or Connection" });
+            if (user.socketID) io.to(user.socketID).emit("error", { error: "You have been kicked", errorCode: 630 });
 
             // Leave Room
             const leaveRoomInfo = await leaveRoom(user.socketID);
 
             // Send error
-            if ("error" in leaveRoomInfo) return { error };
+            if ("error" in leaveRoomInfo) return leaveRoomInfo;
             return { info: "User kicked from previous room and socket connection" };
         }
 
         return { info: "User was not in a room and had no previous connection" };
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
@@ -179,7 +179,7 @@ async function clearRooms() {
         // Send info to users that they have been kicked
         users.forEach(kickFromRoom);
     } catch (error) {
-        return { error };
+        return { error, errorCode: 600 };
     }
 }
 
