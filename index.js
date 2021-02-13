@@ -10,7 +10,6 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const startSockets = require("./sockets");
-const createFirstRoom = require("./room");
 
 // Routes
 const restApiRoutes = require("./routes/restApi");
@@ -40,13 +39,7 @@ const server = http.createServer(app);
 
 // Connect to Mongoose DB
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true }, () => console.log("Connected to DB."));
-
-// #################################################
-//   CREATE THE ROOM OBJECT
-// #################################################
-
-// Delete old room and create a new one
-createFirstRoom();
+mongoose.set("useFindAndModify", false);
 
 // #################################################
 //   SOCKETS

@@ -25,8 +25,8 @@ router.post("/register", async (request, response) => {
     const emailExists = await User.findOne({ email: request.body.email });
     if (emailExists) return response.status(400).send({ error: "This email is already registered in MatchEat." });
 
-    // Check if the name has already been used
-    const userExists = await User.findOne({ name: request.body.name });
+    // Check if the username has already been used
+    const userExists = await User.findOne({ username: request.body.username });
     if (userExists) return response.status(400).send({ error: "Username not available." });
 
     // Hash the password
@@ -35,7 +35,7 @@ router.post("/register", async (request, response) => {
 
     // Create User
     const user = new User({
-        name: request.body.name,
+        username: request.body.username,
         email: request.body.email,
         password: hashedPassword,
         image: request.body.image,
@@ -73,7 +73,7 @@ router.post("/login", async (request, response) => {
     const token = webToken.sign({ _id: user._id }, process.env.TOKEN_SECRET);
     response.header("token", token).send({
         token,
-        name: user.name,
+        username: user.username,
         id: user._id,
         image: user.image,
     });

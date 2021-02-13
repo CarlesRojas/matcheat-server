@@ -1,20 +1,15 @@
 const mongoose = require("mongoose");
 
 const roomSchema = new mongoose.Schema({
-    id: {
+    roomID: {
         type: String,
         required: true,
-        min: 8,
+        min: 2,
         max: 16,
     },
-    rooms: {
-        type: Array,
-        default: [],
-    },
-
-    users: {
-        type: Array,
-        default: [],
+    open: {
+        type: Boolean,
+        default: true,
     },
 });
 

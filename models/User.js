@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    name: {
+    username: {
         type: String,
         required: true,
         min: 3,
@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema({
         required: true,
         min: 6,
         max: 1024,
+    },
+    socketID: {
+        type: String,
+        min: 2,
+        max: 128,
+    },
+    roomID: {
+        type: String,
+        min: 2,
+        max: 16,
     },
     date: {
         type: Date,
