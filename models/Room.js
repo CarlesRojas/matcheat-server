@@ -7,6 +7,12 @@ const roomSchema = new mongoose.Schema({
         min: 2,
         max: 16,
     },
+    boss: {
+        type: String,
+        required: true,
+        min: 3,
+        max: 12,
+    },
     open: {
         type: Boolean,
         default: true,

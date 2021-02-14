@@ -36,24 +36,22 @@ SOCKET MESSAGE TYPES:
 // #################################################
 
 // Create Room
-async function createRoom(roomID, socketID, username) {
+async function createRoom(socket, roomID, socketID, username) {
     try {
         // Return if room already exists
         const room = await Room.findOne({ roomID });
-        if (room) return { error: "Room already exists", errorCode: 611 };
+        if (room) return socket.emit("error", { error: "Room already exists", errorCode: 611 });
 
         // Get user
         const user = await User.findOne({ username });
-        if (!user) return { error: "User does not exist", errorCode: 620 };
+        if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
 
         // Kick from previous rooms and connections
-        const kickedFromRoomError = await kickFromRoom(user);
-
-        // Send error
-        if ("error" in kickedFromRoomError) return kickedFromRoomError;
+        const kickedResponse = await kickFromRoom(socket, user);
+        if ("error" in kickedResponse) return socket.emit("error", kickedResponse);
 
         // Create Room
-        const newRoom = new Room({ roomID, open: true });
+        const newRoom = new Room({ roomID, boss: username, open: true });
 
         // Update User
         await User.findOneAndUpdate({ username }, { $set: { socketID, roomID } });
@@ -61,33 +59,28 @@ async function createRoom(roomID, socketID, username) {
         // Create Room
         await newRoom.save();
 
-        // Send simplified user data
-        const simplifiedUser = { username: user.username, image: user.image };
-
-        // Return
-        return { info: "Room created", simplifiedUser, room: newRoom };
+        // Join socket room
+        socket.join(roomID);
     } catch (error) {
-        return { error, errorCode: 600 };
+        socket.emit("error", { error, errorCode: 600 });
     }
 }
 
 // Join Room
-async function joinRoom(roomID, socketID, username) {
+async function joinRoom(socket, roomID, socketID, username) {
     try {
         // Return if room does not exist or if it is closed
         const room = await Room.findOne({ roomID });
-        if (!room) return { error: "Room does not exist", errorCode: 610 };
-        if (!room.open) return { error: "Room is closed" };
+        if (!room) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
+        if (!room.open) return socket.emit("error", { error: "Room is closed", errorCode: 612 });
 
         // Get user
         const user = await User.findOne({ username });
-        if (!user) return { error: "User does not exist", errorCode: 620 };
+        if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
 
         // Kick from previous rooms and connections
-        const kickedFromRoomError = await kickFromRoom(user);
-
-        // Send error
-        if ("error" in kickedFromRoomError) return kickedFromRoomError;
+        const kickedResponse = await kickFromRoom(socket, user);
+        if ("error" in kickedResponse) return socket.emit("error", kickedResponse);
 
         // Update User
         await User.findOneAndUpdate({ username }, { $set: { socketID, roomID } });
@@ -95,39 +88,58 @@ async function joinRoom(roomID, socketID, username) {
         // Send simplified user data
         const simplifiedUser = { username: user.username, image: user.image };
 
-        // Return
-        return { info: "Room joined", simplifiedUser, room };
+        // Join socket room
+        socket.join(roomID);
+
+        // ROJAS Send a list of current users in the room to the one connecting
+
+        // Broadcast to the room that you joined
+        socket.broadcast.to(roomID).emit("userJoinedRoom", { info: "Room joined", simplifiedUser, room });
     } catch (error) {
-        return { error, errorCode: 600 };
+        socket.emit("error", { error, errorCode: 600 });
     }
 }
 
 // Leave Room and return the user that left
-async function leaveRoom(socketID) {
+async function leaveRoom(socket, socketID) {
     try {
         // Get user
         const user = await User.findOne({ socketID });
-        if (!user) return { error: "User does not exist", errorCode: 620 };
+        if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
 
         // Get users room
-        const room = { roomID: user.roomID };
+        const room = await Room.findOne({ roomID: user.roomID });
+        if (!room) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
 
         // Remove user from the room
         await User.findOneAndUpdate({ username: user.username }, { $set: { socketID: "", roomID: "" } });
 
         // Get all users in the Room
         const usersInRoom = await getAllUsersInARoom(user.roomID);
-
-        // If there are no more users in the Room -> Delete the Room
-        if (!usersInRoom.length) await Room.deleteOne({ roomID: user.roomID });
+        if ("error" in usersInRoom) return socket.emit("error", usersInRoom);
 
         // Send simplified user data
         const simplifiedUser = { username: user.username, image: user.image };
 
-        // Return the user that left
-        return { info: `${user.username} left the room`, simplifiedUser, room };
+        // If there are no more users in the Room -> Delete the Room
+        if (!usersInRoom.length) return await Room.deleteOne({ roomID: user.roomID });
+
+        // Delete room and kick everyone if the one who left was the boss and the room was not closed
+        if (room.open && room.boss === user.username) {
+            // Delete room from DB
+            await Room.deleteOne({ roomID: user.roomID });
+
+            // Update users in the room
+            await User.updateMany({ roomID: user.roomID }, { $set: { socketID: "", roomID: "" } });
+
+            // Inform everyone that the room was closed
+            return io.to(room.roomID).emit("error", { error: "Room has been closed", errorCode: 630 });
+        }
+
+        // Inform everyone in the room that this user has disconected
+        io.to(room.roomID).emit("userLeftRoom", { info: `${user.username} left the room`, simplifiedUser, room });
     } catch (error) {
-        return { error, errorCode: 600 };
+        socket.emit("error", { error, errorCode: 600 });
     }
 }
 
@@ -147,17 +159,16 @@ async function getAllUsersInARoom(roomID) {
 }
 
 // Kick user from room
-async function kickFromRoom(user) {
+async function kickFromRoom(socket, user) {
     try {
         if (user.socketID || user.roomID) {
             // Inform the user with that socket ID
-            if (user.socketID) io.to(user.socketID).emit("error", { error: "You have been kicked", errorCode: 630 });
+            if (user.socketID) io.to(user.socketID).emit("error", { error: "You have been kicked", errorCode: 631 });
 
             // Leave Room
-            const leaveRoomInfo = await leaveRoom(user.socketID);
+            await leaveRoom(socket, user.socketID);
 
             // Send error
-            if ("error" in leaveRoomInfo) return leaveRoomInfo;
             return { info: "User kicked from previous room and socket connection" };
         }
 
@@ -174,12 +185,12 @@ async function clearRooms() {
         await Room.deleteMany({});
 
         // Get all users
-        const users = await User.find({});
+        await User.updateMany({}, { $set: { socketID: "", roomID: "" } });
 
         // Send info to users that they have been kicked
-        users.forEach(kickFromRoom);
+        io.emit("error", { error: "Server restart", errorCode: 601 });
     } catch (error) {
-        return { error, errorCode: 600 };
+        return;
     }
 }
 
@@ -198,43 +209,22 @@ async function startSockets(server) {
     io.on("connection", async (socket) => {
         // Create room
         socket.on("createRoom", async ({ roomID, username }) => {
-            // Create room if needed
-            var createRoomResponse = await createRoom(roomID, socket.id, username);
-
-            // Send error
-            if ("error" in createRoomResponse) return socket.emit("error", createRoomResponse);
-
-            // Join socket room
-            socket.join(roomID);
+            await createRoom(socket, roomID, socket.id, username);
         });
 
         // Join room
         socket.on("joinRoom", async ({ roomID, username }) => {
-            // Join room
-            var joinRoomResponse = await joinRoom(roomID, socket.id, username);
+            await joinRoom(socket, roomID, socket.id, username);
+        });
 
-            // Send error
-            if ("error" in joinRoomResponse) return socket.emit("error", joinRoomResponse);
-
-            // Join socket room
-            socket.join(roomID);
-
-            //console.log(await getAllUsersInARoomData(roomID));
-
-            // Broadcast to the room that you joined
-            socket.broadcast.to(roomID).emit("userJoinedRoom", joinRoomResponse.simplifiedUser);
+        // Leave room
+        socket.on("leaveRoom", async () => {
+            await leaveRoom(socket, socket.id);
         });
 
         // Broadcast -> User disconnected
         socket.on("disconnect", async () => {
-            // Leave Room
-            const leaveRoomInfo = await leaveRoom(socket.id);
-
-            // Send error
-            if ("error" in leaveRoomInfo) return socket.emit("error", leaveRoomInfo);
-
-            // Inform everyone in the room that this user has disconected
-            io.to(leaveRoomInfo.room.roomID).emit("userLeftRoom", leaveRoomInfo.simplifiedUser);
+            await leaveRoom(socket, socket.id);
         });
     });
 }

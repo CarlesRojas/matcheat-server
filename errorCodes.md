@@ -2,10 +2,16 @@
 
 **600** : `Unknown server error`
 
+**601** : `Server closed`
+
 **610** : `Room does not exist`
 
 **611** : `Room already exists`
 
+**612** : `Room is closed`
+
 **620** : `User does not exist`
 
-**630** : `Kicked from the room`
+**630** : `Room boss has left`
+
+**631** : `Kicked from the room`
