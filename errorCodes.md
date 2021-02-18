@@ -2,7 +2,7 @@
 
 **600** : `Unknown server error`
 
-**601** : `Server closed`
+**601** : `Server Restarted`
 
 **610** : `Room does not exist`
 

@@ -188,7 +188,7 @@ async function clearRooms() {
         await User.updateMany({}, { $set: { socketID: "", roomID: "" } });
 
         // Send info to users that they have been kicked
-        io.emit("error", { error: "Server restart", errorCode: 601 });
+        io.emit("error", { error: "Server Start", errorCode: 601 });
     } catch (error) {
         return;
     }
