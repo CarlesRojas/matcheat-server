@@ -61,6 +61,11 @@ async function createRoom(socket, roomID, socketID, username) {
 
         // Join socket room
         socket.join(roomID);
+
+        // Send a list of current users in the room to the one joining
+        const usersInRoom = await getAllUsersInARoom(roomID);
+        if ("error" in usersInRoom) return socket.emit("error", usersInRoom);
+        else socket.emit("roomUsers", usersInRoom);
     } catch (error) {
         socket.emit("error", { error, errorCode: 600 });
     }
@@ -91,7 +96,10 @@ async function joinRoom(socket, roomID, socketID, username) {
         // Join socket room
         socket.join(roomID);
 
-        // ROJAS Send a list of current users in the room to the one connecting
+        // Send a list of current users in the room to the one joining
+        const usersInRoom = await getAllUsersInARoom(roomID);
+        if ("error" in usersInRoom) return socket.emit("error", usersInRoom);
+        else socket.emit("roomUsers", usersInRoom);
 
         // Broadcast to the room that you joined
         socket.broadcast.to(roomID).emit("userJoinedRoom", { info: "Room joined", simplifiedUser, room });
