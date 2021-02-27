@@ -12,6 +12,8 @@
 
 **620** : `User does not exist`
 
+**621** : `No user with this socket`
+
 **630** : `Room boss has left`
 
 **631** : `Kicked from the room`

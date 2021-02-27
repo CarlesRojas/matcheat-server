@@ -113,7 +113,7 @@ async function leaveRoom(socket, socketID) {
     try {
         // Get user
         const user = await User.findOne({ socketID });
-        if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
+        if (!user) return socket.emit("error", { error: "No user with this socket", errorCode: 621 });
 
         // Get users room
         const room = await Room.findOne({ roomID: user.roomID });
