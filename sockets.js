@@ -24,11 +24,15 @@ SOCKET MESSAGE TYPES:
     // Emit to all clients connected in a room except the client that made the connection
     socket.broadcast.to(roomID).emit("eventName", payload);
 
+    // Emit to all clients connected
+    io.emit("eventName", payload);
+
+    // Emit to all clients in a room
+    io.to(roomID).emit("eventName", payload);
+
     // Emit to a specific client
     io.to(socketID).emit(eventName", payload);
 
-    // Emit to all clients connected
-    io.emit("eventName", payload);
 */
 
 // #################################################
@@ -151,6 +155,12 @@ async function leaveRoom(socket, socketID) {
     }
 }
 
+// Start a Room
+async function startRoom(socket, socketID, roomID) {
+    // Inform all in the room that it has started
+    io.to(roomID).emit("roomHasStarted");
+}
+
 // Get all users in a Room
 async function getAllUsersInARoom(roomID) {
     try {
@@ -228,6 +238,11 @@ async function startSockets(server) {
         // Leave room
         socket.on("leaveRoom", async () => {
             await leaveRoom(socket, socket.id);
+        });
+
+        // Start a Room
+        socket.on("startRoom", async ({ roomID }) => {
+            await startRoom(socket, socket.id, roomID);
         });
 
         // Broadcast -> User disconnected
