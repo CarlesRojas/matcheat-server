@@ -8,6 +8,7 @@ const socketio = require("socket.io");
 // Get Room & User schemes
 const Room = require("./models/Room");
 const User = require("./models/User");
+const Restaurant = require("./models/Restaurant");
 
 // IO object
 var io = null;
@@ -133,11 +134,20 @@ async function leaveRoom(socket, socketID) {
         // Send simplified user data
         const simplifiedUser = { username: user.username, image: user.image };
 
-        // If there are no more users in the Room -> Delete the Room
-        if (!usersInRoom.length) return await Room.deleteOne({ roomID: user.roomID });
+        // If there are no more users in the Room -> Delete the Room and its restaurants
+        if (!usersInRoom.length) {
+            // Delete restaurants of that Room from DB
+            await Restaurant.deleteMany({ roomID: user.roomID });
 
-        // Delete room and kick everyone if the one who left was the boss and the room was not closed
+            // Delete Room
+            return await Room.deleteOne({ roomID: user.roomID });
+        }
+
+        // Delete room & Restaurants and kick everyone if the one who left was the boss and the room was not closed
         if (room.open && room.boss === user.username) {
+            // Delete restaurants of that Room from DB
+            await Restaurant.deleteMany({ roomID: user.roomID });
+
             // Delete room from DB
             await Room.deleteOne({ roomID: user.roomID });
 
@@ -201,6 +211,9 @@ async function clearRooms() {
     try {
         // Delete previous rooms from DB
         await Room.deleteMany({});
+
+        // Delete previous restaurants from DB
+        await Restaurant.deleteMany({});
 
         // Get all users
         await User.updateMany({}, { $set: { socketID: "", roomID: "" } });

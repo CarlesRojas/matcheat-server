@@ -19,26 +19,29 @@ router.post("/register", async (request, response) => {
     const { error } = registerValidation(request.body);
 
     // If there is a validation error
-    if (error) return response.status(400).send({ error: error.details[0].message });
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    // Body deconstruction
+    const { email, username, password, image } = request.body;
 
     // Check if the email has already been used
-    const emailExists = await User.findOne({ email: request.body.email });
-    if (emailExists) return response.status(400).send({ error: "This email is already registered in MatchEat." });
+    const emailExists = await User.findOne({ email });
+    if (emailExists) return response.status(400).json({ error: "This email is already registered in MatchEat." });
 
     // Check if the username has already been used
-    const userExists = await User.findOne({ username: request.body.username });
-    if (userExists) return response.status(400).send({ error: "Username not available." });
+    const userExists = await User.findOne({ username });
+    if (userExists) return response.status(400).json({ error: "Username not available." });
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(request.body.password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create User
     const user = new User({
-        username: request.body.username,
-        email: request.body.email,
+        username,
+        email,
         password: hashedPassword,
-        image: request.body.image,
+        image,
     });
 
     try {
@@ -46,10 +49,10 @@ router.post("/register", async (request, response) => {
         await user.save();
 
         // Return the user in the response
-        response.send({ id: user._id });
+        response.json({ id: user._id });
     } catch (error) {
         // Return DB error
-        response.status(400).send({ error });
+        response.status(400).json({ error });
     }
 });
 
@@ -59,19 +62,22 @@ router.post("/login", async (request, response) => {
     const { error } = loginValidation(request.body);
 
     // If there is a validation error
-    if (error) return response.status(400).send({ error: error.details[0].message });
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    // Body deconstruction
+    const { email, password } = request.body;
 
     // Check if the email exists
-    const user = await User.findOne({ email: request.body.email });
-    if (!user) return response.status(400).send({ error: "This email does not exist." });
+    const user = await User.findOne({ email });
+    if (!user) return response.status(400).json({ error: "This email does not exist." });
 
     // Check if the password is correct
-    const validPassword = await bcrypt.compare(request.body.password, user.password);
-    if (!validPassword) return response.status(400).send({ error: "Invalid password." });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return response.status(400).json({ error: "Invalid password." });
 
     // Create and assign token
     const token = webToken.sign({ _id: user._id }, process.env.TOKEN_SECRET);
-    response.header("token", token).send({
+    response.header("token", token).json({
         token,
         username: user.username,
         id: user._id,

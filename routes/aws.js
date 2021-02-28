@@ -27,12 +27,13 @@ router.post("/getS3URL", async (request, response) => {
     const { error } = getS3URLValidation(request.body);
 
     // If there is a validation error
-    if (error) return response.status(400).send({ error: error.details[0].message });
+    if (error) return response.status(400).json({ error: error.details[0].message });
 
     // Create a new instance of S3
     const s3 = new aws.S3();
-    const fileName = request.body.fileName;
-    const fileType = request.body.fileType;
+
+    // Body deconstruction
+    const { fileName, fileType } = request.body;
 
     // Payload for the S3 API
     const s3Params = {
@@ -46,10 +47,10 @@ router.post("/getS3URL", async (request, response) => {
     // Make a request to the S3 API to get a signed URL which we can use to upload our file
     s3.getSignedUrl("putObject", s3Params, (error, data) => {
         // Return the error
-        if (error) response.status(400).send({ error });
+        if (error) response.status(400).json({ error });
 
         // Return the user in the response
-        response.send({
+        response.json({
             signedRequest: data,
             url: `https://${S3_BUCKET}.s3.amazonaws.com/${fileName}`,
         });
