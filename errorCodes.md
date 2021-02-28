@@ -4,6 +4,8 @@
 
 **601** : `Server Restarted`
 
+**602** : `Disconnected from server`
+
 **610** : `Room does not exist`
 
 **611** : `Room already exists`

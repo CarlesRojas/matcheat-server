@@ -160,7 +160,7 @@ router.post("/getPlaces", verify, async (request, response) => {
         await Room.findOneAndUpdate({ roomID }, { $set: { open: false } });
 
         // Return success
-        response.json({ success: true });
+        return response.json({ success: true });
     } catch (error) {
         return response.status(400).json({ error });
     }
