@@ -165,10 +165,10 @@ async function leaveRoom(socket, socketID) {
     }
 }
 
-// Start a Room
-async function startRoom(socket, socketID, roomID) {
+// Broadcast message to room
+async function broadcastMessageToRoom(message, roomID) {
     // Inform all in the room that it has started
-    io.to(roomID).emit("roomHasStarted");
+    io.to(roomID).emit(message);
 }
 
 // Get all users in a Room
@@ -254,8 +254,8 @@ async function startSockets(server) {
         });
 
         // Start a Room
-        socket.on("startRoom", async ({ roomID }) => {
-            await startRoom(socket, socket.id, roomID);
+        socket.on("broadcastMessageToRoom", async ({ message, roomID }) => {
+            await broadcastMessageToRoom(message, roomID);
         });
 
         // Broadcast -> User disconnected
