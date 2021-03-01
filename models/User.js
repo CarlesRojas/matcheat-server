@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema({
         min: 2,
         max: 16,
     },
+    hasFinished: {
+        type: Boolean,
+        required: true,
+        default: false,
+    },
     date: {
         type: Date,
         default: Date.now,

@@ -13,6 +13,14 @@ const restaurantSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    latBoss: {
+        type: Number,
+        required: true,
+    },
+    lonBoss: {
+        type: Number,
+        required: true,
+    },
     restaurantID: {
         type: String,
         required: true,
@@ -39,6 +47,10 @@ const restaurantSchema = new mongoose.Schema({
         required: true,
         min: 2,
         max: 16,
+    },
+    score: {
+        type: Number,
+        required: true,
     },
 });
 

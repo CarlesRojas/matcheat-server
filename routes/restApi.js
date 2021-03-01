@@ -8,7 +8,7 @@ const router = require("express").Router();
 const verify = require("./verifyToken");
 
 // Get the Validation schemas
-const { getPlacesValidation } = require("../validation");
+const { getPlacesValidation, getRoomRestaurantsValidation } = require("../validation");
 
 // Dot env constants
 const dotenv = require("dotenv");
@@ -38,6 +38,7 @@ router.post("/getPlaces", verify, async (request, response) => {
 
     // If there is a validation error
     if (error) return response.status(400).json({ error: error.details[0].message });
+
     try {
         // Body deconstruction
         const { lat, lon, roomID } = request.body;
@@ -137,12 +138,15 @@ router.post("/getPlaces", verify, async (request, response) => {
                     name,
                     lat: geometry.location.lat,
                     lon: geometry.location.lng,
+                    latBoss: lat,
+                    lonBoss: lon,
                     restaurantID: place_id,
                     rating,
                     adress: formatted_address,
                     price: price_level,
                     photos: photoUrls,
                     roomID,
+                    score: 0,
                 });
 
                 // Save restaurant to DB
@@ -163,6 +167,25 @@ router.post("/getPlaces", verify, async (request, response) => {
         return response.json({ success: true });
     } catch (error) {
         return response.status(400).json({ error });
+    }
+});
+
+// Get the restaurants for a room
+router.post("/getRoomRestaurants", verify, async (request, response) => {
+    // Validate data
+    const { error } = getRoomRestaurantsValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Get all restaurants in a room
+        const restaurants = await Restaurant.find({ roomID: request.body.roomID });
+
+        // Return the restaurants
+        return response.json(restaurants);
+    } catch (error) {
+        return { error, errorCode: 600 };
     }
 });
 

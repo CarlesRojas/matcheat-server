@@ -125,7 +125,7 @@ async function leaveRoom(socket, socketID) {
         if (!room) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
 
         // Remove user from the room
-        await User.findOneAndUpdate({ username: user.username }, { $set: { socketID: "", roomID: "" } });
+        await User.findOneAndUpdate({ username: user.username }, { $set: { socketID: "", roomID: "", hasFinished: false } });
 
         // Get all users in the Room
         const usersInRoom = await getAllUsersInARoom(user.roomID);
@@ -152,7 +152,7 @@ async function leaveRoom(socket, socketID) {
             await Room.deleteOne({ roomID: user.roomID });
 
             // Update users in the room
-            await User.updateMany({ roomID: user.roomID }, { $set: { socketID: "", roomID: "" } });
+            await User.updateMany({ roomID: user.roomID }, { $set: { socketID: "", roomID: "", hasFinished: false } });
 
             // Inform everyone that the room was closed
             return io.to(room.roomID).emit("error", { error: "Room has been closed", errorCode: 630 });
@@ -216,7 +216,7 @@ async function clearRooms() {
         await Restaurant.deleteMany({});
 
         // Get all users
-        await User.updateMany({}, { $set: { socketID: "", roomID: "" } });
+        await User.updateMany({}, { $set: { socketID: "", roomID: "", hasFinished: false } });
 
         // Send info to users that they have been kicked
         io.emit("error", { error: "Server Start", errorCode: 601 });

@@ -42,6 +42,7 @@ router.post("/register", async (request, response) => {
         email,
         password: hashedPassword,
         image,
+        hasFinished: false,
     });
 
     try {

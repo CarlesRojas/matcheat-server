@@ -32,7 +32,7 @@ const getS3URLValidation = (data) => {
     return schema.validate(data);
 };
 
-// Upload to S3 validation
+// Get Places validation
 const getPlacesValidation = (data) => {
     const schema = Joi.object({
         roomID: Joi.string().alphanum().min(2).max(16).required(),
@@ -43,7 +43,17 @@ const getPlacesValidation = (data) => {
     return schema.validate(data);
 };
 
+// Get Room Restaurants validation
+const getRoomRestaurantsValidation = (data) => {
+    const schema = Joi.object({
+        roomID: Joi.string().alphanum().min(2).max(16).required(),
+    });
+
+    return schema.validate(data);
+};
+
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.getS3URLValidation = getS3URLValidation;
 module.exports.getPlacesValidation = getPlacesValidation;
+module.exports.getRoomRestaurantsValidation = getRoomRestaurantsValidation;

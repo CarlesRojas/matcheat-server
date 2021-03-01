@@ -15,6 +15,7 @@ const roomSchema = new mongoose.Schema({
     },
     open: {
         type: Boolean,
+        required: true,
         default: true,
     },
 });
