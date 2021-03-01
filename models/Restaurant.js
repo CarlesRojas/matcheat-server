@@ -21,6 +21,12 @@ const restaurantSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    bossName: {
+        type: String,
+        required: true,
+        min: 3,
+        max: 12,
+    },
     restaurantID: {
         type: String,
         required: true,

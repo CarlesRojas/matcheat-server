@@ -35,6 +35,7 @@ const getS3URLValidation = (data) => {
 // Get Places validation
 const getPlacesValidation = (data) => {
     const schema = Joi.object({
+        bossName: Joi.string().alphanum().min(3).max(12).required(),
         roomID: Joi.string().alphanum().min(2).max(16).required(),
         lat: Joi.number().min(-90).max(90).required(),
         lon: Joi.number().min(-180).max(180).required(),

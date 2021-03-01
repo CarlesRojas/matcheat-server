@@ -42,7 +42,7 @@ router.post("/getPlaces", verify, async (request, response) => {
 
     try {
         // Body deconstruction
-        const { lat, lon, roomID } = request.body;
+        const { lat, lon, roomID, bossName } = request.body;
 
         // Return if room does not exist or if it is closed
         const room = await Room.findOne({ roomID });
@@ -141,6 +141,7 @@ router.post("/getPlaces", verify, async (request, response) => {
                     lon: geometry.location.lng,
                     latBoss: lat,
                     lonBoss: lon,
+                    bossName,
                     restaurantID: place_id,
                     rating,
                     adress: formatted_address,
