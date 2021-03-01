@@ -22,7 +22,8 @@ const gapiNearbyURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/j
 const gapiDetailsURL = "https://maps.googleapis.com/maps/api/place/details/json?";
 const gapiPhotoURL = "https://maps.googleapis.com/maps/api/place/photo?";
 
-// Get Room & Restaurant schemes
+// Get the User, Room & Restaurant schemes
+const User = require("../models/User");
 const Room = require("../models/Room");
 const Restaurant = require("../models/Restaurant");
 
@@ -162,6 +163,9 @@ router.post("/getPlaces", verify, async (request, response) => {
 
         // Close the room
         await Room.findOneAndUpdate({ roomID }, { $set: { open: false } });
+
+        // Set the hasFinished variable to false for all people in the room
+        await User.updateMany({ roomID }, { $set: { hasFinished: false } });
 
         // Return success
         return response.json({ success: true });
