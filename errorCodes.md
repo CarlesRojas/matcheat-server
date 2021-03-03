@@ -19,3 +19,5 @@
 **630** : `Room boss has left`
 
 **631** : `Kicked from the room`
+
+**640** : `Restaurant does not exist`

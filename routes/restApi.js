@@ -8,7 +8,7 @@ const router = require("express").Router();
 const verify = require("./verifyToken");
 
 // Get the Validation schemas
-const { getPlacesValidation, getRoomRestaurantsValidation } = require("../validation");
+const { getPlacesValidation, getRoomRestaurantsValidation, addToRestaurantScoreValidation } = require("../validation");
 
 // Dot env constants
 const dotenv = require("dotenv");
@@ -82,7 +82,7 @@ router.post("/getPlaces", verify, async (request, response) => {
             if ("next_page_token" in nearbyResponse) pageToken = nearbyResponse.next_page_token;
 
             // Return if there is an error in the google response
-            if (!("results" in nearbyResponse)) return response.status(400).json({ error: "Google Services not available" });
+            if (!("results" in nearbyResponse) || !results.length) return response.status(400).json({ error: "Google Services not available" });
 
             // Iterate for every restaurant
             for (let j = 0; j < nearbyResponse.results.length; j++) {
@@ -147,6 +147,8 @@ router.post("/getPlaces", verify, async (request, response) => {
                     adress: formatted_address,
                     price: price_level,
                     photos: photoUrls,
+                    likes: [],
+                    loves: [],
                     roomID,
                     score: 0,
                 });
@@ -184,11 +186,69 @@ router.post("/getRoomRestaurants", verify, async (request, response) => {
     if (error) return response.status(400).json({ error: error.details[0].message });
 
     try {
+        // Body deconstruction
+        const { roomID } = request.body;
+
         // Get all restaurants in a room
-        const restaurants = await Restaurant.find({ roomID: request.body.roomID });
+        const restaurants = await Restaurant.find({ roomID });
 
         // Return the restaurants
         return response.json(restaurants);
+    } catch (error) {
+        return { error, errorCode: 600 };
+    }
+});
+
+// Add to the score of a restaurant
+router.post("/addToRestaurantScore", verify, async (request, response) => {
+    // Validate data
+    const { error } = addToRestaurantScoreValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Body deconstruction
+        const { username, roomID, restaurantID, score } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
+
+        // Get the restaurant
+        const restaurant = await Restaurant.find({ roomID, restaurantID });
+        if (!restaurant) return socket.emit("error", { error: "Restaurant does not exist", errorCode: 640 });
+
+        // If the user likes the restaurant
+        if (score === 1) {
+            // Update the score and add the likes array
+            await Restaurant.findOneAndUpdate(
+                { roomID, restaurantID },
+                {
+                    $set: {
+                        score: restaurant.score + score,
+                        likes: [...restaurant.likes, { username: user.username, image: user.image }],
+                    },
+                }
+            );
+        }
+
+        // If the user loves the restaurant
+        else if (score === 2) {
+            // Update the score and add the loves array
+            await Restaurant.findOneAndUpdate(
+                { roomID, restaurantID },
+                {
+                    $set: {
+                        score: restaurant.score + score,
+                        loves: [...restaurant.loves, { username: user.username, image: user.image }],
+                    },
+                }
+            );
+        }
+
+        // Return success
+        return response.json({ success: true });
     } catch (error) {
         return { error, errorCode: 600 };
     }

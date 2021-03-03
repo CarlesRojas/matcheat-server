@@ -53,8 +53,21 @@ const getRoomRestaurantsValidation = (data) => {
     return schema.validate(data);
 };
 
+// Add to Restaurant Score validation
+const addToRestaurantScoreValidation = (data) => {
+    const schema = Joi.object({
+        username: Joi.string().alphanum().min(3).max(12).required(),
+        roomID: Joi.string().alphanum().min(2).max(16).required(),
+        restaurantID: Joi.string().required(),
+        score: Joi.number().min(1).max(2).required(),
+    });
+
+    return schema.validate(data);
+};
+
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.getS3URLValidation = getS3URLValidation;
 module.exports.getPlacesValidation = getPlacesValidation;
 module.exports.getRoomRestaurantsValidation = getRoomRestaurantsValidation;
+module.exports.addToRestaurantScoreValidation = addToRestaurantScoreValidation;

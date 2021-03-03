@@ -48,6 +48,38 @@ const restaurantSchema = new mongoose.Schema({
             type: String,
         },
     ],
+    likes: [
+        {
+            username: {
+                type: String,
+                required: true,
+                min: 3,
+                max: 12,
+            },
+            image: {
+                type: String,
+                required: true,
+                min: 6,
+                max: 1024,
+            },
+        },
+    ],
+    loves: [
+        {
+            username: {
+                type: String,
+                required: true,
+                min: 3,
+                max: 12,
+            },
+            image: {
+                type: String,
+                required: true,
+                min: 6,
+                max: 1024,
+            },
+        },
+    ],
     roomID: {
         type: String,
         required: true,
