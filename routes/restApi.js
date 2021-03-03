@@ -82,7 +82,7 @@ router.post("/getPlaces", verify, async (request, response) => {
             if ("next_page_token" in nearbyResponse) pageToken = nearbyResponse.next_page_token;
 
             // Return if there is an error in the google response
-            if (!("results" in nearbyResponse) || !results.length) return response.status(400).json({ error: "Google Services not available" });
+            if (!("results" in nearbyResponse) || !nearbyResponse.results.length) return response.status(400).json({ error: "Google Services not available" });
 
             // Iterate for every restaurant
             for (let j = 0; j < nearbyResponse.results.length; j++) {
@@ -173,6 +173,7 @@ router.post("/getPlaces", verify, async (request, response) => {
         // Return success
         return response.json({ success: true });
     } catch (error) {
+        console.log(error);
         return response.status(400).json({ error });
     }
 });
@@ -195,7 +196,7 @@ router.post("/getRoomRestaurants", verify, async (request, response) => {
         // Return the restaurants
         return response.json(restaurants);
     } catch (error) {
-        return { error, errorCode: 600 };
+        return response.status(400).json({ error });
     }
 });
 
@@ -216,7 +217,7 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
         if (!user) return socket.emit("error", { error: "User does not exist", errorCode: 620 });
 
         // Get the restaurant
-        const restaurant = await Restaurant.find({ roomID, restaurantID });
+        const restaurant = await Restaurant.findOne({ roomID, restaurantID });
         if (!restaurant) return socket.emit("error", { error: "Restaurant does not exist", errorCode: 640 });
 
         // If the user likes the restaurant
@@ -225,10 +226,8 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
             await Restaurant.findOneAndUpdate(
                 { roomID, restaurantID },
                 {
-                    $set: {
-                        score: restaurant.score + score,
-                        likes: [...restaurant.likes, { username: user.username, image: user.image }],
-                    },
+                    $set: { score: restaurant.score + score },
+                    $push: { likes: { username: user.username, image: user.image } },
                 }
             );
         }
@@ -239,10 +238,8 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
             await Restaurant.findOneAndUpdate(
                 { roomID, restaurantID },
                 {
-                    $set: {
-                        score: restaurant.score + score,
-                        loves: [...restaurant.loves, { username: user.username, image: user.image }],
-                    },
+                    $set: { score: restaurant.score + score },
+                    $push: { loves: { username: user.username, image: user.image } },
                 }
             );
         }
@@ -250,7 +247,8 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
         // Return success
         return response.json({ success: true });
     } catch (error) {
-        return { error, errorCode: 600 };
+        console.log(error);
+        return response.status(400).json({ error });
     }
 });
 

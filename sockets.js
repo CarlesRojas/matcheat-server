@@ -41,7 +41,7 @@ SOCKET MESSAGE TYPES:
 // #################################################
 
 // Create Room
-async function createRoom(socket, roomID, socketID, username) {
+async function createRoom(socket, socketID, roomID, username) {
     try {
         // Return if room already exists
         const room = await Room.findOne({ roomID });
@@ -77,7 +77,7 @@ async function createRoom(socket, roomID, socketID, username) {
 }
 
 // Join Room
-async function joinRoom(socket, roomID, socketID, username) {
+async function joinRoom(socket, socketID, roomID, username) {
     try {
         // Return if room does not exist or if it is closed
         const room = await Room.findOne({ roomID });
@@ -120,7 +120,7 @@ async function leaveRoom(socket, socketID) {
         const user = await User.findOne({ socketID });
         if (!user) return socket.emit("error", { error: "No user with this socket", errorCode: 621 });
 
-        // Get users room
+        // Get the room
         const room = await Room.findOne({ roomID: user.roomID });
         if (!room) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
 
@@ -160,6 +160,31 @@ async function leaveRoom(socket, socketID) {
 
         // Inform everyone in the room that this user has disconected
         io.to(room.roomID).emit("userLeftRoom", { info: `${user.username} left the room`, simplifiedUser, room });
+    } catch (error) {
+        socket.emit("error", { error, errorCode: 600 });
+    }
+}
+
+// Leave Room and return the user that left
+async function finishScoringRestaurants(socket, roomID, username) {
+    try {
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return socket.emit("error", { error: "No user with this socket", errorCode: 621 });
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { hasFinished: true } });
+
+        // Get all users room
+        const users = await User.find({ roomID });
+        if (!users) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
+
+        // Check if all finished
+        const allFinished = users.reduce((prev, { hasFinished }) => prev && hasFinished, true);
+        console.log(allFinished);
+
+        // Inform everyone in the room that all users
+        if (allFinished) io.to(roomID).emit("everyoneFinished", { info: `Everyone Finished` });
     } catch (error) {
         socket.emit("error", { error, errorCode: 600 });
     }
@@ -240,17 +265,22 @@ async function startSockets(server) {
     io.on("connection", async (socket) => {
         // Create room
         socket.on("createRoom", async ({ roomID, username }) => {
-            await createRoom(socket, roomID, socket.id, username);
+            await createRoom(socket, socket.id, roomID, username);
         });
 
         // Join room
         socket.on("joinRoom", async ({ roomID, username }) => {
-            await joinRoom(socket, roomID, socket.id, username);
+            await joinRoom(socket, socket.id, roomID, username);
         });
 
         // Leave room
         socket.on("leaveRoom", async () => {
             await leaveRoom(socket, socket.id);
+        });
+
+        // Leave room
+        socket.on("finishScoringRestaurants", async ({ roomID, username }) => {
+            await finishScoringRestaurants(socket, roomID, username);
         });
 
         // Start a Room
