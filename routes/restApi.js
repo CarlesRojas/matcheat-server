@@ -173,7 +173,6 @@ router.post("/getPlaces", verify, async (request, response) => {
         // Return success
         return response.json({ success: true });
     } catch (error) {
-        console.log(error);
         return response.status(400).json({ error });
     }
 });
@@ -247,7 +246,6 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
         // Return success
         return response.json({ success: true });
     } catch (error) {
-        console.log(error);
         return response.status(400).json({ error });
     }
 });

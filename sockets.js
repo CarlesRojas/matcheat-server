@@ -181,7 +181,6 @@ async function finishScoringRestaurants(socket, roomID, username) {
 
         // Check if all finished
         const allFinished = users.reduce((prev, { hasFinished }) => prev && hasFinished, true);
-        console.log(allFinished);
 
         // Inform everyone in the room that all users
         if (allFinished) io.to(roomID).emit("everyoneFinished", { info: `Everyone Finished` });
