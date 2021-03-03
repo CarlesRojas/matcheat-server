@@ -86,10 +86,6 @@ const restaurantSchema = new mongoose.Schema({
         min: 2,
         max: 16,
     },
-    score: {
-        type: Number,
-        required: true,
-    },
 });
 
 module.exports = mongoose.model("Restaurant", restaurantSchema);

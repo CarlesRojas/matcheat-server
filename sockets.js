@@ -127,9 +127,8 @@ async function leaveRoom(socket, socketID) {
         // Remove user from the room
         await User.findOneAndUpdate({ username: user.username }, { $set: { socketID: "", roomID: "", hasFinished: false } });
 
-        // Get all users in the Room
-        const usersInRoom = await getAllUsersInARoom(user.roomID);
-        if ("error" in usersInRoom) return socket.emit("error", usersInRoom);
+        // Remove user from the room// Get users
+        const usersInRoom = await User.find({ roomID: user.roomID });
 
         // Send simplified user data
         const simplifiedUser = { username: user.username, image: user.image };
@@ -158,6 +157,30 @@ async function leaveRoom(socket, socketID) {
             return io.to(room.roomID).emit("error", { error: "Room has been closed", errorCode: 630 });
         }
 
+        // If the room was closed -> Remove all scores from this user
+        else if (!room.open) {
+            // Remove likes & loves from this user
+            await Restaurant.updateMany(
+                { roomID: user.roomID },
+                {
+                    $pull: {
+                        likes: { username: user.username },
+                        loves: { username: user.username },
+                    },
+                },
+                { safe: true, multi: true }
+            );
+
+            // If it was the last user in a room scoring restaurants -> Inform the others that everyone finished
+            if (!user.hasFinished) {
+                // Check if everyone else has finished
+                const allFinishedButLeavingUser = usersInRoom.reduce((prev, { hasFinished, username }) => prev && (username === user.username || hasFinished), true);
+
+                // Signal that the room has finished
+                if (allFinishedButLeavingUser) io.to(user.roomID).emit("everyoneFinished", { info: `Everyone Finished` });
+            }
+        }
+
         // Inform everyone in the room that this user has disconected
         io.to(room.roomID).emit("userLeftRoom", { info: `${user.username} left the room`, simplifiedUser, room });
     } catch (error) {
@@ -177,7 +200,6 @@ async function finishScoringRestaurants(socket, roomID, username) {
 
         // Get all users room
         const users = await User.find({ roomID });
-        if (!users) return socket.emit("error", { error: "Room does not exist", errorCode: 610 });
 
         // Check if all finished
         const allFinished = users.reduce((prev, { hasFinished }) => prev && hasFinished, true);
@@ -220,7 +242,7 @@ async function kickFromRoom(socket, user) {
             // Leave Room
             await leaveRoom(socket, user.socketID);
 
-            // Send error
+            // Send info
             return { info: "User kicked from previous room and socket connection" };
         }
 

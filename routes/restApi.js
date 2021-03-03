@@ -150,7 +150,6 @@ router.post("/getPlaces", verify, async (request, response) => {
                     likes: [],
                     loves: [],
                     roomID,
-                    score: 0,
                 });
 
                 // Save restaurant to DB
@@ -222,25 +221,13 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
         // If the user likes the restaurant
         if (score === 1) {
             // Update the score and add the likes array
-            await Restaurant.findOneAndUpdate(
-                { roomID, restaurantID },
-                {
-                    $set: { score: restaurant.score + score },
-                    $push: { likes: { username: user.username, image: user.image } },
-                }
-            );
+            await Restaurant.findOneAndUpdate({ roomID, restaurantID }, { $push: { likes: { username: user.username, image: user.image } } });
         }
 
         // If the user loves the restaurant
         else if (score === 2) {
             // Update the score and add the loves array
-            await Restaurant.findOneAndUpdate(
-                { roomID, restaurantID },
-                {
-                    $set: { score: restaurant.score + score },
-                    $push: { loves: { username: user.username, image: user.image } },
-                }
-            );
+            await Restaurant.findOneAndUpdate({ roomID, restaurantID }, { $push: { loves: { username: user.username, image: user.image } } });
         }
 
         // Return success
