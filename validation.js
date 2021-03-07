@@ -70,7 +70,7 @@ const changeUsernameValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(12).required(),
         newUsername: Joi.string().alphanum().min(3).max(12).required(),
-        password: Joi.string().min(6).max(1024).required(),
+        password: Joi.string().required(),
     });
 
     return schema.validate(data);
@@ -81,7 +81,7 @@ const changeEmailValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(12).required(),
         email: Joi.string().min(6).max(256).required().email(),
-        password: Joi.string().min(6).max(1024).required(),
+        password: Joi.string().required(),
     });
 
     return schema.validate(data);
@@ -91,7 +91,7 @@ const changeEmailValidation = (data) => {
 const changePasswordValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(12).required(),
-        password: Joi.string().min(6).max(1024).required(),
+        password: Joi.string().required(),
         newPassword: Joi.string().min(6).max(1024).required(),
     });
 
@@ -102,7 +102,7 @@ const changePasswordValidation = (data) => {
 const changeImageValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(12).required(),
-        password: Joi.string().min(6).max(1024).required(),
+        password: Joi.string().required(),
         image: Joi.string().min(6).max(1024).required(),
     });
 

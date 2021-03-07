@@ -26,7 +26,7 @@ router.post("/register", async (request, response) => {
 
     // Check if the email has already been used
     const emailExists = await User.findOne({ email });
-    if (emailExists) return response.status(400).json({ error: "This email is already registered in MatchEat." });
+    if (emailExists) return response.status(400).json({ error: "Email already taken." });
 
     // Check if the username has already been used
     const userExists = await User.findOne({ username });
