@@ -387,15 +387,11 @@ router.post("/changeSettings", verify, async (request, response) => {
 
     try {
         // Deconstruct body
-        const { username, password, settings } = request.body;
+        const { username, settings } = request.body;
 
         // Get user
         const user = await User.findOne({ username });
         if (!user) return response.status(400).json({ error: "User does not exist" });
-
-        // Check if the password is correct
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
 
         // Update User
         await User.findOneAndUpdate({ username }, { $set: { settings } });

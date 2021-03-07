@@ -84,6 +84,7 @@ router.post("/login", async (request, response) => {
         username: user.username,
         id: user._id,
         image: user.image,
+        settings: user.settings,
     });
 });
 
