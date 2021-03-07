@@ -453,6 +453,21 @@ router.post("/deleteAccount", verify, async (request, response) => {
     // If there is a validation error
     if (error) return response.status(400).json({ error: error.details[0].message });
 
+    // Delete from aws
+    const deleteImageFromAws = (imageName) => {
+        return new Promise((resolve, reject) => {
+            // Delete old image from aws
+            const s3 = new aws.S3();
+            var s3Params = { Bucket: S3_BUCKET, Key: imageName };
+
+            s3.deleteObject(s3Params, (error, data) => {
+                // Return the error
+                if (error) reject(error);
+                resolve(data);
+            });
+        });
+    };
+
     try {
         // Deconstruct body
         const { username, password } = request.body;
@@ -468,10 +483,14 @@ router.post("/deleteAccount", verify, async (request, response) => {
         // Delete User
         await User.deleteOne({ username });
 
+        // Delete olf image
+        await deleteImageFromAws(user.image.replace("https://matcheat.s3.amazonaws.com/", ""));
+
         // Return success
         response.json({ success: true });
     } catch (error) {
         // Return error
+        if ("message" in error) response.status(400).json({ error: error.message });
         response.status(400).json({ error });
     }
 });
