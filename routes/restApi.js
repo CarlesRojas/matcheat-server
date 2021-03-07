@@ -7,8 +7,20 @@ const router = require("express").Router();
 // Token verification
 const verify = require("./verifyToken");
 
+// Encrypt password
+const bcrypt = require("bcryptjs");
+
 // Get the Validation schemas
-const { getPlacesValidation, getRoomRestaurantsValidation, addToRestaurantScoreValidation } = require("../validation");
+const {
+    getPlacesValidation,
+    getRoomRestaurantsValidation,
+    addToRestaurantScoreValidation,
+    changeUsernameValidation,
+    changeEmailValidation,
+    changePasswordValidation,
+    changeImageValidation,
+    changeSettingsValidation,
+} = require("../validation");
 
 // Dot env constants
 const dotenv = require("dotenv");
@@ -234,6 +246,165 @@ router.post("/addToRestaurantScore", verify, async (request, response) => {
         return response.json({ success: true });
     } catch (error) {
         return response.status(400).json({ error });
+    }
+});
+
+// API to change the username
+router.post("/changeUsername", verify, async (request, response) => {
+    // Validate data
+    const { error } = changeUsernameValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, newUsername, password } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { username: newUsername } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
+    }
+});
+
+// API to change the email
+router.post("/changeEmail", verify, async (request, response) => {
+    // Validate data
+    const { error } = changeEmailValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, email, password } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { email } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
+    }
+});
+
+// API to change the password
+router.post("/changePassword", verify, async (request, response) => {
+    // Validate data
+    const { error } = changePasswordValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, password, newPassword } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Hash the new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { password: hashedPassword } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
+    }
+});
+
+// API to change the image
+router.post("/changeImage", verify, async (request, response) => {
+    // Validate data
+    const { error } = changeImageValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, password, image } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { image } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
+    }
+});
+
+// API to change the image
+router.post("/changeSettings", verify, async (request, response) => {
+    // Validate data
+    const { error } = changeSettingsValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, password, settings } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Update User
+        await User.findOneAndUpdate({ username }, { $set: { settings } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
     }
 });
 

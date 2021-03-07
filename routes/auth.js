@@ -43,6 +43,7 @@ router.post("/register", async (request, response) => {
         password: hashedPassword,
         image,
         hasFinished: false,
+        settings: { vibrate: true },
     });
 
     try {

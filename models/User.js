@@ -44,6 +44,12 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    settings: {
+        vibrate: {
+            type: Boolean,
+            default: true,
+        },
+    },
 });
 
 module.exports = mongoose.model("User", userSchema);
