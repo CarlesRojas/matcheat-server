@@ -75,8 +75,8 @@ router.post("/getPlaces", verify, async (request, response) => {
         if (!room) return response.status(400).json({ error: "Room does not exist" });
 
         // Restaurants
-        const desiredNumPhotosPerRestaurants = 3;
-        const desiredNumberOfRestaurants = 5;
+        const desiredNumPhotosPerRestaurants = 4;
+        const desiredNumberOfRestaurants = 8;
         var numRestaurants = 0;
 
         // Token to get te next 20 restaurats
