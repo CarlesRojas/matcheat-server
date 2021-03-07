@@ -37,6 +37,7 @@ const {
     changePasswordValidation,
     changeImageValidation,
     changeSettingsValidation,
+    deleteAccountValidation,
 } = require("../validation");
 
 // Google API key
@@ -435,6 +436,37 @@ router.post("/changeSettings", verify, async (request, response) => {
 
         // Update User
         await User.findOneAndUpdate({ username }, { $set: { settings } });
+
+        // Return success
+        response.json({ success: true });
+    } catch (error) {
+        // Return error
+        response.status(400).json({ error });
+    }
+});
+
+// API to change the password
+router.post("/deleteAccount", verify, async (request, response) => {
+    // Validate data
+    const { error } = deleteAccountValidation(request.body);
+
+    // If there is a validation error
+    if (error) return response.status(400).json({ error: error.details[0].message });
+
+    try {
+        // Deconstruct body
+        const { username, password } = request.body;
+
+        // Get user
+        const user = await User.findOne({ username });
+        if (!user) return response.status(400).json({ error: "User does not exist" });
+
+        // Check if the password is correct
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return response.status(400).json({ error: "Invalid password." });
+
+        // Delete User
+        await User.deleteOne({ username });
 
         // Return success
         response.json({ success: true });

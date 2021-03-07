@@ -119,6 +119,16 @@ const changeSettingsValidation = (data) => {
     return schema.validate(data);
 };
 
+// Delete account validation
+const deleteAccountValidation = (data) => {
+    const schema = Joi.object({
+        username: Joi.string().alphanum().min(3).max(12).required(),
+        password: Joi.string().required(),
+    });
+
+    return schema.validate(data);
+};
+
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.getS3URLValidation = getS3URLValidation;
@@ -130,3 +140,4 @@ module.exports.changeEmailValidation = changeEmailValidation;
 module.exports.changePasswordValidation = changePasswordValidation;
 module.exports.changeImageValidation = changeImageValidation;
 module.exports.changeSettingsValidation = changeSettingsValidation;
+module.exports.deleteAccountValidation = deleteAccountValidation;
